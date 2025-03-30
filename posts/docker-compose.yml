@@ -1,0 +1,50 @@
+services:
+  posts-migrator:
+    build:
+      context: .
+      dockerfile: utils/migrator/Dockerfile
+    depends_on:
+      - posts-postgres
+    networks:
+      - posts-network
+    environment:
+      - POSTGRES_DB=posts
+      - MIGRATIONS_FOLDER=./posts/migrations/postgres
+      - POSTGRES_HOST=posts-postgres
+
+  posts:
+    build:
+      context: .
+      dockerfile: posts/Dockerfile
+    ports:
+      - "50003:50003"
+    depends_on:
+      - posts-postgres
+    networks:
+      - sn-network
+      - posts-network
+    environment:
+      - POSTGRES_DB=posts
+      - POSTGRES_HOST=posts-postgres
+
+  posts-postgres:
+    image: postgres:17
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: posts
+    volumes:
+      - posts-postgres-data:/var/lib/postgresql/data
+    networks:
+      - posts-network
+      - sn-network
+    ports:
+      - "5432:5432"
+
+volumes:
+  posts-postgres-data:
+
+networks:
+  posts-network:
+    driver: bridge

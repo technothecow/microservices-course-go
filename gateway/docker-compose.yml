@@ -1,0 +1,46 @@
+services:
+  gateway-migrator:
+    build:
+      context: .
+      dockerfile: utils/migrator/Dockerfile
+    depends_on:
+      - gateway-postgres
+    networks:
+      - gateway-network
+    environment:
+      - POSTGRES_DB=gateway
+#      - MIGRATIONS_FOLDER=gateway/migrations/postgres
+
+  gateway:
+    build:
+      context: .
+      dockerfile: gateway/Dockerfile
+    ports:
+      - "50001:50001"
+    depends_on:
+      - gateway-postgres
+    networks:
+      - sn-network
+      - gateway-network
+    environment:
+      - POSTGRES_DB=gateway
+      - JWT_SECRET_KEY=secretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecretsecret
+
+  gateway-postgres:
+    image: postgres:17
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: gateway
+    volumes:
+      - gateway-postgres-data:/var/lib/postgresql/data
+    networks:
+      - gateway-network
+
+volumes:
+  gateway-postgres-data:
+
+networks:
+  gateway-network:
+    driver: bridge

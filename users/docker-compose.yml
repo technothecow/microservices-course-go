@@ -1,0 +1,48 @@
+services:
+  users-migrator:
+    build:
+      context: .
+      dockerfile: utils/migrator/Dockerfile
+    depends_on:
+      - users-postgres
+    networks:
+      - users-network
+    environment:
+      - POSTGRES_DB=users
+      - MIGRATIONS_FOLDER=./users/migrations/postgres
+      - POSTGRES_HOST=users-postgres
+
+  users:
+    build:
+      context: .
+      dockerfile: users/Dockerfile
+    ports:
+      - "50002:50002"
+    depends_on:
+      - users-postgres
+    networks:
+      - sn-network
+      - users-network
+    environment:
+      - POSTGRES_DB=users
+      - POSTGRES_HOST=users-postgres
+
+  users-postgres:
+    image: postgres:17
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: users
+      POSTGRES_HOST: users-postgres
+    volumes:
+      - users-postgres-data:/var/lib/postgresql/data
+    networks:
+      - users-network
+
+volumes:
+  users-postgres-data:
+
+networks:
+  users-network:
+    driver: bridge

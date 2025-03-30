@@ -1,0 +1,404 @@
+openapi: 3.1.0
+info:
+    title: Gateway API
+    description: API for the Gateway
+    version: 1.0.0
+paths:
+    /ping:
+        get:
+            summary: Ping endpoint
+            description: Returns a simple message
+            operationId: Ping
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/PingResponse'
+    /v1/users:
+        post:
+            summary: Register a new user
+            description: Creates a new user account
+            operationId: RegisterUser
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/UserRegistration'
+            responses:
+                '201':
+                    description: User successfully created
+                    headers:
+                        Set-Cookie:
+                            required: true
+                            schema:
+                                type: string
+                                example: 'auth_token=abc123; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=3600'
+                '400':
+                    description: Bad Request
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+
+    /v1/users/me:
+        post:
+            summary: Authenticates user
+            description: Checks credentials and sets necessary cookies
+            operationId: AuthUser
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/UsernameAndPassword'
+            responses:
+                200:
+                    description: Authenticated user
+                    headers:
+                        Set-Cookie:
+                            required: true
+                            schema:
+                                type: string
+                                example: 'auth_token=abc123; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=3600'
+                400:
+                    description: Bad credentials
+        get:
+            summary: Info about logged user
+            operationId: GetMyProfile
+            responses:
+                '200':
+                    description: User profile
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ProfileResponse'
+                '401':
+                    description: Unauthorized
+        patch:
+            summary: Edit user profile
+            operationId: EditMyProfile
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/EditProfile'
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ProfileResponse'
+                '401':
+                    description: Unauthorized
+
+    /v1/posts:
+        post:
+            summary: Create a post
+            operationId: CreatePost
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/CreatePostRequest'
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Post'
+                '400':
+                    description: Bad request
+                '401':
+                    description: Not authenticated
+        get:
+            summary: Get a post
+            operationId: GetPost
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/PostId'
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Post'
+                '400':
+                    description: Bad request
+                '401':
+                    description: Not authenticated
+                '403':
+                    description: Not authorized
+                '404':
+                    description: Post not found
+        patch:
+            summary: Edit a post
+            operationId: EditPost
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/EditPostRequest'
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Post'
+                '400':
+                    description: Bad request
+                '401':
+                    description: Not authenticated
+                '403':
+                    description: Not authorized
+                '404':
+                    description: Post not found
+        delete:
+            summary: Delete a post
+            operationId: DeletePost
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/PostId'
+            responses:
+                '200':
+                    description: OK
+                '401':
+                    description: Not authenticated
+                '403':
+                    description: Not authorized
+                '404':
+                    description: Post not found
+
+    /v1/posts/list:
+        get:
+            summary: Get paginated list of posts
+            operationId: GetPostsList
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/PaginatedPostsRequest'
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/PostsList'
+                '401':
+                    description: Not authenticated
+
+components:
+    schemas:
+        PingResponse:
+            type: object
+            required:
+                - message
+            properties:
+                message:
+                    type: string
+
+        Error:
+            type: object
+            required:
+                - code
+                - message
+            properties:
+                code:
+                    type: string
+                message:
+                    type: string
+
+        UserRegistration:
+            type: object
+            required:
+                - username
+                - password
+                - email
+            properties:
+                username:
+                    type: string
+                    example: john_doe
+                password:
+                    type: string
+                    format: password
+                    example: Pa$$w0rd
+                email:
+                    type: string
+                    format: email
+                    example: john.doe@example.com
+
+        ProfileResponse:
+            type: object
+            required:
+                - id
+                - username
+                - email
+                - last_login
+            properties:
+                id:
+                    type: string
+                    format: uuid
+                username:
+                    type: string
+                email:
+                    type: string
+                full_name:
+                    type: string
+                date_of_birth:
+                    type: string
+                    example: '2004-03-29'
+                phone_number:
+                    type: string
+                last_login:
+                    type: string
+                    example: '2004-03-29 12:30'
+
+        UsernameAndPassword:
+            type: object
+            required:
+                - username
+                - password
+            properties:
+                username:
+                    type: string
+                password:
+                    type: string
+
+        EditProfile:
+            type: object
+            properties:
+                full_name:
+                    type: string
+                date_of_birth:
+                    type: string
+                    format: date
+                    example: '2004-03-29'
+                phone_number:
+                    type: string
+
+        Post:
+            type: object
+            required:
+                - id
+                - title
+                - description
+                - isPrivate
+                - creatorId
+                - tags
+                - createdAt
+                - updatedAt
+            properties:
+                id:
+                    type: string
+                    format: uuid
+                title:
+                    type: string
+                description:
+                    type: string
+                isPrivate:
+                    type: string
+                creatorId:
+                    type: string
+                tags:
+                    type: array
+                    items:
+                        type: string
+                createdAt:
+                    type: string
+                    example: '2004-03-29 12:30'
+                updatedAt:
+                    type: string
+                    example: '2004-03-29 12:30'
+
+        PostId:
+            type: object
+            required:
+                - id
+            properties:
+                id:
+                    type: string
+                    format: uuid
+
+        EditPostRequest:
+            type: object
+            required:
+                - id
+                - title
+                - description
+                - isPrivate
+                - tags
+            properties:
+                id:
+                    type: string
+                    format: uuid
+                title:
+                    type: string
+                description:
+                    type: string
+                isPrivate:
+                    type: string
+                tags:
+                    type: array
+                    items:
+                        type: string
+
+        PaginatedPostsRequest:
+            type: object
+            required:
+                - page
+                - pagesize
+            properties:
+                page:
+                    type: number
+                pagesize:
+                    type: number
+                tags:
+                    type: array
+                    items:
+                        type: string
+
+        PostsList:
+            type: object
+            required:
+                - posts
+            properties:
+                posts:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/Post'
+
+        CreatePostRequest:
+            type: object
+            required:
+                - title
+                - description
+                - isPrivate
+                - tags
+            properties:
+                title:
+                    type: string
+                description:
+                    type: string
+                isPrivate:
+                    type: string
+                tags:
+                    type: array
+                    items:
+                        type: string

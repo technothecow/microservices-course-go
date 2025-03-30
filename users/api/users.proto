@@ -1,0 +1,82 @@
+syntax = "proto3";
+
+package user.v1;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+option go_package = "libraries/proto/users";
+
+// User service for managing user accounts and authentication
+service UserService {
+    // Register a new user
+    rpc RegisterUser(RegisterUserRequest) returns (UserProfileResponse) {}
+    
+    // Authenticate a user and return a token
+    rpc AuthenticateUser(AuthenticateUserRequest) returns (AuthResponse) {}
+    
+    // Get the profile of the authenticated user
+    rpc GetUserProfile(GetUserProfileRequest) returns (UserProfileResponse) {}
+    
+    // Update the profile of the authenticated user
+    rpc UpdateUserProfile(UpdateUserProfileRequest) returns (UserProfileResponse) {}
+
+    // Delete the profile of the authenticated user
+    rpc DeleteUserProfile(DeleteUserProfileRequest) returns (google.protobuf.Empty) {}
+}
+
+// Request message for getting a user profile
+message GetUserProfileRequest {
+    string id = 1;
+}
+
+// Request message for registering a new user
+message RegisterUserRequest {
+    string username = 1;
+    string password = 2;
+    string email = 3;
+}
+
+// Request message for authenticating a user
+message AuthenticateUserRequest {
+    string username = 1;
+    string password = 2;
+}
+
+// Response message for authentication
+message AuthResponse {
+    string id = 1;
+}
+
+// Complete user profile information
+message UserProfileResponse {
+    string id = 1;
+    string username = 2;
+    string email = 3;
+    string full_name = 4;
+    string date_of_birth = 5; // Format: YYYY-MM-DD
+    string phone_number = 6;
+    google.protobuf.Timestamp created_at = 7;
+    google.protobuf.Timestamp updated_at = 8;
+    google.protobuf.Timestamp last_login = 9;
+    bool is_active = 10;
+}
+
+// Request message for updating a user profile
+message UpdateUserProfileRequest {
+    string id = 1;
+    string full_name = 2;
+    string date_of_birth = 3; // Format: YYYY-MM-DD
+    string phone_number = 4;
+}
+
+// Error response message
+message ErrorResponse {
+    int32 code = 1;
+    string message = 2;
+}
+
+// Request message for deleting a user profile
+message DeleteUserProfileRequest {
+    string id = 1;
+}
