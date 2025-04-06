@@ -2,9 +2,11 @@ package usecase
 
 import (
 	"database/sql"
+	"encoding/json"
 	"errors"
-	"time"
 	"log"
+	"sn/libraries/kafka"
+	"time"
 
 	"github.com/lib/pq"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -201,4 +203,73 @@ func ListPosts(req *posts.ListPostsRequest) (*posts.ListPostsResponse, error) {
 		Posts:      postsList,
 		TotalCount: int32(totalCount),
 	}, nil
+}
+
+var commentTopic = "posts_comments"
+
+type commentEvent struct {
+	PostId    string `json:"post_id"`
+	Username  string `json:"username"`
+	Timestamp int64  `json:"timestamp"`
+}
+
+func CreateComment(req *posts.CommentPostRequest, db *sql.DB) error {
+	query := `INSERT INTO comments (content, creator_id, post_id)
+	VALUES ($1, $2, $3)`
+
+	_, err := db.Exec(query, req.GetText(), req.GetUserId(), req.GetPostId())
+	if err != nil {
+		return err
+	}
+
+	event := commentEvent{
+		PostId:    req.GetPostId(),
+		Username:  req.GetUserId(),
+		Timestamp: time.Now().Unix(),
+	}
+	json_, err := json.Marshal(event)
+	if err != nil {
+		log.Printf("failed to marshal comment event: %v", err)
+		return err
+	}
+	_, _, err = kafka.SendMessageSync(commentTopic, []byte{}, json_, true)
+	if err != nil {
+		log.Printf("failed to send comment event to kafka: %v", err)
+		return err
+	}
+
+	return nil
+}
+
+func ListComments(req *posts.ListCommentsRequest, db *sql.DB) ([]*posts.Comment, error) {
+	query := `SELECT c.id, c.content, c.creator_id, c.created_at, c.post_id
+	FROM comments c
+	JOIN posts p ON c.post_id = p.id
+	WHERE (p.is_private = FALSE OR p.creator_id = $1)
+	AND c.post_id = $2
+	ORDER BY c.created_at
+	LIMIT $3 OFFSET $4;`
+
+	rows, err := db.Query(query, req.GetUserId(), req.GetPostId(), req.GetPageSize(), req.GetPageSize()*req.GetPageNumber())
+	if err != nil {
+		return nil, err
+	}
+
+	var comments []*posts.Comment
+
+	for rows.Next() {
+		comment := &posts.Comment{}
+		var createdAt time.Time
+
+		err = rows.Scan(
+			&comment.Id, &comment.Text, &comment.UserId, &createdAt, &comment.PostId)
+		if err != nil {
+			return nil, err
+		}
+		comment.CreatedAt = timestamppb.New(createdAt)
+
+		comments = append(comments, comment)
+	}
+
+	return comments, nil
 }

@@ -3,17 +3,17 @@ package usecase
 import (
 	"context"
 	"errors"
+	"log"
 	gen "sn/gateway/generated"
 	"sn/libraries/proto/posts"
 	"strconv"
 	"strings"
 	"time"
-	"log"
 
 	"github.com/google/uuid"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
 )
 
@@ -62,11 +62,11 @@ func CreatePost(userId string, body *gen.CreatePostRequest) (*gen.Post, error) {
 	defer cl()
 
 	request := posts.CreatePostRequest{
-		Title:         body.Title,
-		Description:   body.Description,
-		UserId:        userId,
-		IsPrivate:     strings.ToLower(body.IsPrivate) == "true",
-		Tags:          &posts.Tags{Values: body.Tags},
+		Title:       body.Title,
+		Description: body.Description,
+		UserId:      userId,
+		IsPrivate:   strings.ToLower(body.IsPrivate) == "true",
+		Tags:        &posts.Tags{Values: body.Tags},
 	}
 
 	response, err := client.CreatePost(ctx, &request)
@@ -86,8 +86,8 @@ func GetPost(postId, userId string) (*gen.Post, error) {
 	defer cl()
 
 	request := posts.GetPostRequest{
-		Id:            postId,
-		RequesterId:   userId,
+		Id:          postId,
+		RequesterId: userId,
 	}
 
 	response, err := client.GetPost(ctx, &request)
@@ -107,11 +107,16 @@ func ListPosts(userId string, body *gen.PaginatedPostsRequest) (*gen.PostsList, 
 	}
 	defer cl()
 
+	tags := []string{}
+	if body.Tags != nil {
+		tags = *body.Tags
+	}
+
 	request := posts.ListPostsRequest{
-		RequesterId:   userId,
-		PageNumber:    int32(body.Page),
-		PageSize:      int32(body.Pagesize),
-		Tags:          &posts.Tags{Values: *body.Tags},
+		RequesterId: userId,
+		PageNumber:  int32(body.Page),
+		PageSize:    int32(body.Pagesize),
+		Tags:        &posts.Tags{Values: tags},
 	}
 
 	response, err := client.ListPosts(ctx, &request)
@@ -119,11 +124,11 @@ func ListPosts(userId string, body *gen.PaginatedPostsRequest) (*gen.PostsList, 
 		return nil, err
 	}
 
-	posts := make([]gen.Post, len(response.Posts))
+	posts_ := make([]gen.Post, len(response.Posts))
 	for i, post := range response.Posts {
-		posts[i] = *grpcPostToGenPost(post)
+		posts_[i] = *grpcPostToGenPost(post)
 	}
-	return &gen.PostsList{Posts: posts}, nil
+	return &gen.PostsList{Posts: posts_}, nil
 }
 
 func EditPost(userId string, body *gen.EditPostRequest) (*gen.Post, error) {
@@ -183,4 +188,67 @@ func DeletePost(userId string, postId string) error {
 		return err
 	}
 	return nil
+}
+
+func CreateComment(userId string, body *gen.CreateCommentRequest) error {
+	client, ctx, cl, err := GetPostsClient()
+	if err != nil {
+		return err
+	}
+	defer cl()
+
+	request := posts.CommentPostRequest{
+		PostId: body.PostId.String(),
+		UserId: userId,
+		Text:   body.Text,
+	}
+
+	_, err = client.CommentPost(ctx, &request)
+	if err != nil {
+		if status.Code(err) == codes.NotFound {
+			return ErrPostNotFound
+		} else if status.Code(err) == codes.PermissionDenied {
+			return ErrPostNotAuthorized
+		}
+		return err
+	}
+
+	return nil
+}
+
+func GetCommentsList(userId string, body *gen.PaginatedCommentsRequest) (*gen.CommentsList, error) {
+	client, ctx, cl, err := GetPostsClient()
+	if err != nil {
+		return nil, err
+	}
+	defer cl()
+
+	request := posts.ListCommentsRequest{
+		UserId:     userId,
+		PostId:     body.PostId.String(),
+		PageNumber: int32(body.Page),
+		PageSize:   int32(body.Pagesize),
+	}
+
+	response, err := client.ListComments(ctx, &request)
+	if err != nil {
+		if status.Code(err) == codes.NotFound {
+			return nil, ErrPostNotFound
+		} else if status.Code(err) == codes.PermissionDenied {
+			return nil, ErrPostNotAuthorized
+		}
+		return nil, err
+	}
+
+	var comments = make([]gen.Comment, len(response.Comments))
+	for i, comment := range response.Comments {
+		comments[i] = gen.Comment{
+			Id:        uuid.MustParse(comment.Id),
+			PostId:    uuid.MustParse(comment.PostId),
+			Text:      comment.Text,
+			CreatedAt: comment.CreatedAt.AsTime().Format("2006-01-02 15:04"),
+			UserId:    uuid.MustParse(comment.UserId),
+		}
+	}
+	return &gen.CommentsList{Comments: comments}, nil
 }

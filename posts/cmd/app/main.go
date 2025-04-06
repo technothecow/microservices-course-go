@@ -6,12 +6,15 @@ import (
 
 	"google.golang.org/grpc"
 
+	"sn/libraries/kafka"
 	pb "sn/libraries/proto/posts"
 
 	"sn/posts/internal/gateway/grpc"
 )
 
 func main() {
+	defer kafka.CloseProducer()
+
 	listener, err := net.Listen("tcp", ":50003")
 	if err != nil {
 		log.Fatalf("Failed to listen: %v", err)

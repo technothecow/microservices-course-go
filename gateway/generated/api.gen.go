@@ -17,6 +17,26 @@ import (
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
+// Comment defines model for Comment.
+type Comment struct {
+	CreatedAt string             `json:"createdAt"`
+	Id        openapi_types.UUID `json:"id"`
+	PostId    openapi_types.UUID `json:"postId"`
+	Text      string             `json:"text"`
+	UserId    openapi_types.UUID `json:"userId"`
+}
+
+// CommentsList defines model for CommentsList.
+type CommentsList struct {
+	Comments []Comment `json:"comments"`
+}
+
+// CreateCommentRequest defines model for CreateCommentRequest.
+type CreateCommentRequest struct {
+	PostId openapi_types.UUID `json:"postId"`
+	Text   string             `json:"text"`
+}
+
 // CreatePostRequest defines model for CreatePostRequest.
 type CreatePostRequest struct {
 	Description string   `json:"description"`
@@ -45,6 +65,13 @@ type EditProfile struct {
 type Error struct {
 	Code    string `json:"code"`
 	Message string `json:"message"`
+}
+
+// PaginatedCommentsRequest defines model for PaginatedCommentsRequest.
+type PaginatedCommentsRequest struct {
+	Page     float32            `json:"page"`
+	Pagesize float32            `json:"pagesize"`
+	PostId   openapi_types.UUID `json:"postId"`
 }
 
 // PaginatedPostsRequest defines model for PaginatedPostsRequest.
@@ -117,6 +144,15 @@ type EditPostJSONRequestBody = EditPostRequest
 // CreatePostJSONRequestBody defines body for CreatePost for application/json ContentType.
 type CreatePostJSONRequestBody = CreatePostRequest
 
+// PostCommentJSONRequestBody defines body for PostComment for application/json ContentType.
+type PostCommentJSONRequestBody = CreateCommentRequest
+
+// GetCommentsListJSONRequestBody defines body for GetCommentsList for application/json ContentType.
+type GetCommentsListJSONRequestBody = PaginatedCommentsRequest
+
+// LikePostJSONRequestBody defines body for LikePost for application/json ContentType.
+type LikePostJSONRequestBody = PostId
+
 // GetPostsListJSONRequestBody defines body for GetPostsList for application/json ContentType.
 type GetPostsListJSONRequestBody = PaginatedPostsRequest
 
@@ -146,8 +182,17 @@ type ServerInterface interface {
 	// Create a post
 	// (POST /v1/posts)
 	CreatePost(c *gin.Context)
+	// Create a comment
+	// (POST /v1/posts/comments)
+	PostComment(c *gin.Context)
+	// Get paginated list of comments
+	// (POST /v1/posts/comments/list)
+	GetCommentsList(c *gin.Context)
+	// Like/unlike a post
+	// (POST /v1/posts/like)
+	LikePost(c *gin.Context)
 	// Get paginated list of posts
-	// (GET /v1/posts/list)
+	// (POST /v1/posts/list)
 	GetPostsList(c *gin.Context)
 	// Register a new user
 	// (POST /v1/users)
@@ -235,6 +280,45 @@ func (siw *ServerInterfaceWrapper) CreatePost(c *gin.Context) {
 	}
 
 	siw.Handler.CreatePost(c)
+}
+
+// PostComment operation middleware
+func (siw *ServerInterfaceWrapper) PostComment(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.PostComment(c)
+}
+
+// GetCommentsList operation middleware
+func (siw *ServerInterfaceWrapper) GetCommentsList(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetCommentsList(c)
+}
+
+// LikePost operation middleware
+func (siw *ServerInterfaceWrapper) LikePost(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.LikePost(c)
 }
 
 // GetPostsList operation middleware
@@ -334,7 +418,10 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.GET(options.BaseURL+"/v1/posts", wrapper.GetPost)
 	router.PATCH(options.BaseURL+"/v1/posts", wrapper.EditPost)
 	router.POST(options.BaseURL+"/v1/posts", wrapper.CreatePost)
-	router.GET(options.BaseURL+"/v1/posts/list", wrapper.GetPostsList)
+	router.POST(options.BaseURL+"/v1/posts/comments", wrapper.PostComment)
+	router.POST(options.BaseURL+"/v1/posts/comments/list", wrapper.GetCommentsList)
+	router.POST(options.BaseURL+"/v1/posts/like", wrapper.LikePost)
+	router.POST(options.BaseURL+"/v1/posts/list", wrapper.GetPostsList)
 	router.POST(options.BaseURL+"/v1/users", wrapper.RegisterUser)
 	router.GET(options.BaseURL+"/v1/users/me", wrapper.GetMyProfile)
 	router.PATCH(options.BaseURL+"/v1/users/me", wrapper.EditMyProfile)
@@ -344,27 +431,31 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"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",
+	"/zhlN0igIgAA",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

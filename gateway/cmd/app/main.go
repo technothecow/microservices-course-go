@@ -3,10 +3,13 @@ package main
 import (
 	"log"
 	"net/http"
+	"sn/libraries/kafka"
+	"time"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"go.uber.org/zap"
 	"github.com/oapi-codegen/gin-middleware"
+	"go.uber.org/zap"
 
 	gen "sn/gateway/generated"
 	"sn/gateway/internal/gateway"
@@ -18,15 +21,27 @@ func main() {
 
 	server := gateway.NewServer()
 	gin.SetMode(gin.ReleaseMode)
-	r := gin.Default()
+	router := gin.Default()
+
+	defer kafka.CloseProducer()
+
+	router.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:3000"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Length", "Content-Type", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
+
 	validationMiddleware, err := ginmiddleware.OapiValidatorFromYamlFile("openapi.yaml")
 	if err != nil {
 		panic(err)
 	}
-	r.Use(validationMiddleware)
-	gen.RegisterHandlers(r, server)
+	router.Use(validationMiddleware)
+	gen.RegisterHandlers(router, server)
 	s := &http.Server{
-		Handler: r,
+		Handler: router,
 		Addr:    "0.0.0.0:50001",
 	}
 

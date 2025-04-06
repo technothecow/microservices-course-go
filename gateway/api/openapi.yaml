@@ -185,7 +185,7 @@ paths:
                     description: Post not found
 
     /v1/posts/list:
-        get:
+        post:
             summary: Get paginated list of posts
             operationId: GetPostsList
             requestBody:
@@ -203,6 +203,70 @@ paths:
                                 $ref: '#/components/schemas/PostsList'
                 '401':
                     description: Not authenticated
+
+    /v1/posts/like:
+        post:
+            summary: Like/unlike a post
+            operationId: LikePost
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/PostId'
+            responses:
+                '200':
+                    description: OK (even if the post is not found or not authorized)
+                '401':
+                    description: Not authenticated
+
+    /v1/posts/comments:
+        post:
+            summary: Create a comment
+            operationId: PostComment
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/CreateCommentRequest'
+            responses:
+                '200':
+                    description: OK
+                '400':
+                    description: Bad request
+                '401':
+                    description: Not authenticated
+                '403':
+                    description: Not authorized
+                '404':
+                    description: Post not found
+    
+    /v1/posts/comments/list:
+        post:
+            summary: Get paginated list of comments
+            operationId: GetCommentsList
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/PaginatedCommentsRequest'
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/CommentsList'
+                '400':
+                    description: Bad request
+                '401':
+                    description: Not authenticated
+                '403':
+                    description: Not authorized
+                '404':
+                    description: Post not found
 
 components:
     schemas:
@@ -391,6 +455,7 @@ components:
                 - description
                 - isPrivate
                 - tags
+            additionalProperties: false
             properties:
                 title:
                     type: string
@@ -402,3 +467,64 @@ components:
                     type: array
                     items:
                         type: string
+
+        CreateCommentRequest:
+            type: object
+            required:
+                - postId
+                - text
+            properties:
+                postId:
+                    type: string
+                    format: uuid
+                text:
+                    type: string
+        
+        PaginatedCommentsRequest:
+            type: object
+            required:
+                - postId
+                - page
+                - pagesize
+            properties:
+                postId:
+                    type: string
+                    format: uuid
+                page:
+                    type: number
+                pagesize:
+                    type: number
+        
+        Comment:
+            type: object
+            required:
+                - id
+                - postId
+                - text
+                - createdAt
+                - userId
+            properties:
+                id:
+                    type: string
+                    format: uuid
+                postId:
+                    type: string
+                    format: uuid
+                text:
+                    type: string
+                createdAt:
+                    type: string
+                    example: '2004-03-29 12:30'
+                userId:
+                    type: string
+                    format: uuid
+
+        CommentsList:
+            type: object
+            required:
+                - comments
+            properties:
+                comments:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/Comment'
