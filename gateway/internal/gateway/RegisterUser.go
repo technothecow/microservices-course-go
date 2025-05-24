@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	gen "sn/gateway/generated"
 	"sn/gateway/internal/usecase"
@@ -25,6 +27,14 @@ func (*Server) RegisterUser(ctx *gin.Context) {
 	profile, err := usecase.RegisterUser(&body)
 	if err != nil {
 		log.Printf("failed to register user: %v", err)
+		st, ok := status.FromError(err)
+		if ok && st.Code() == codes.AlreadyExists {
+			ctx.JSON(http.StatusBadRequest, gen.Error{
+				Message: "User already exists",
+				Code:    "user_already_exists",
+			})
+			return
+		}
 		ctx.JSON(http.StatusInternalServerError, gen.Error{
 			Message: "Failed to register user",
 			Code:    "internal_server_error",

@@ -28,6 +28,7 @@ services:
       KAFKA_JMX_HOSTNAME: kafka
     networks:
       - sn-network
+    restart: always
 
   kafka-ui:
     container_name: kafka-ui

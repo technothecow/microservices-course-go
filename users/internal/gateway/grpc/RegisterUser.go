@@ -46,7 +46,7 @@ func (*Server) RegisterUser(context context.Context, request *grpc.RegisterUserR
 		return nil, status.Error(codes.Internal, "internal error")
 	}
 
-	registrationDateBytes := []byte(user.CreatedAt.Format("2006-01-02 15:04:05"))
+	registrationDateBytes := []byte(user.CreatedAt.Format("2006-01-02 15:04:05") + " " + user.Id)
 	_, _, err = kafka.SendMessageSync(usersCreatedTopic, []byte(user.Id), registrationDateBytes, false)
 	if err != nil {
 		log.Printf("Error while sending message, reverting user creation: %v", err)
