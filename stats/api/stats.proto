@@ -1,0 +1,105 @@
+syntax = "proto3";
+
+package stats.v1;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+option go_package = "libraries/proto/stats";
+
+// Stats service for viewing statistics
+service StatsService {
+    // Get post stats
+    rpc GetPostStats(GetPostStatsRequest) returns (PostStatsResponse) {}
+
+    // Get post dynamics
+    rpc GetPostDynamics(GetPostDynamicsRequest) returns (PostDynamicsResponse) {}
+
+    // Get top posts
+    rpc GetTopPosts(GetTopPostsRequest) returns (TopPostsResponse) {}
+
+    // Get top users
+    rpc GetTopUsers(GetTopUsersRequest) returns (TopUsersResponse) {}
+}
+
+// Request message for getting post stats
+message GetPostStatsRequest {
+    string post_id = 1;
+}
+
+// Response message for post stats
+message PostStatsResponse {
+    int64 comments = 1;
+    int64 likes = 2;
+    int64 views = 3;
+}
+
+// Request message for getting post dynamics
+message GetPostDynamicsRequest {
+    string post_id = 1;
+}
+
+// Response message for post dynamics
+message PostDynamicsResponse {
+    repeated PostDynamicsItem views = 1;
+    repeated PostDynamicsItem likes = 2;
+    repeated PostDynamicsItem comments = 3;
+}
+
+// Post dynamics item
+message PostDynamicsItem {
+    google.protobuf.Timestamp date = 1;
+    int64 value = 2;
+}
+
+// Request message for getting top posts
+message GetTopPostsRequest {
+    TopRequestParam param = 1;
+}
+
+// Request message for getting top users
+message GetTopUsersRequest {
+    TopRequestParam param = 1;
+}
+
+// Request message for top posts
+message TopPostsRequest {
+    string param = 1;
+}
+
+// Request message for top users
+message TopUsersRequest {
+    string param = 1;
+}
+
+// Top posts item
+message TopPostsItem {
+    string post_id = 1;
+    int64 views = 2;
+    int64 likes = 3;
+    int64 comments = 4;
+}
+
+// Response message for top posts
+message TopPostsResponse {
+    repeated TopPostsItem top_posts = 1;
+}
+
+// Top users item
+message TopUsersItem {
+    string user_id = 1;
+    int64 views = 2;
+    int64 likes = 3;
+    int64 comments = 4;
+}
+
+// Response message for top users
+message TopUsersResponse {
+    repeated TopUsersItem top_users = 1;
+}
+
+enum TopRequestParam {
+    VIEWS = 0;
+    LIKES = 1;
+    COMMENTS = 2;
+}

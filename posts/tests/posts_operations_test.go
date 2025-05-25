@@ -2,6 +2,7 @@ package tests
 
 import (
 	"database/sql"
+	"sn/libraries/kafka"
 	"sn/libraries/postgres"
 	"sn/libraries/proto/posts"
 	"sn/posts/internal/usecase"
@@ -32,9 +33,9 @@ func TestCreatePost(t *testing.T) {
 	}
 
 	post := &posts.CreatePostRequest{
-		Title: "Test Post",
+		Title:       "Test Post",
 		Description: "Test Content",
-		UserId: validUserID,
+		UserId:      validUserID,
 	}
 
 	result, err := usecase.CreatePost(post)
@@ -59,7 +60,7 @@ func TestGetPost(t *testing.T) {
 	}
 
 	req := &posts.GetPostRequest{
-		Id: validUUID,
+		Id:          validUUID,
 		RequesterId: validUserID,
 	}
 
@@ -94,12 +95,12 @@ func TestListPosts(t *testing.T) {
 		Tags:        &posts.Tags{Values: []string{}},
 	}
 
-	posts, err := usecase.ListPosts(req)
+	posts_, err := usecase.ListPosts(req)
 
 	assert.NoError(t, err)
-	assert.Equal(t, 2, len(posts.Posts))
-	assert.Equal(t, validUUID, posts.Posts[0].Id)
-	assert.Equal(t, validUUID, posts.Posts[1].Id)
+	assert.Equal(t, 2, len(posts_.Posts))
+	assert.Equal(t, validUUID, posts_.Posts[0].Id)
+	assert.Equal(t, validUUID, posts_.Posts[1].Id)
 }
 
 func TestUpdatePost(t *testing.T) {
@@ -108,7 +109,7 @@ func TestUpdatePost(t *testing.T) {
 		panic(err)
 	}
 	defer db.Close()
-	
+
 	newTitle := "New Title"
 	newDescription := "New Description"
 
@@ -154,4 +155,50 @@ func TestDeletePost(t *testing.T) {
 
 	err = usecase.DeletePost(req)
 	assert.NoError(t, err)
+}
+
+func TestCreateComment(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		panic(err)
+	}
+	defer db.Close()
+
+	mock.ExpectExec(".*").WillReturnResult(sqlmock.NewResult(0, 1))
+
+	kafka.SetTestingMode(true)
+
+	req := &posts.CommentPostRequest{
+		PostId: validUUID,
+		Text:   "Comment Text",
+		UserId: validUserID,
+	}
+
+	err = usecase.CreateComment(req, db)
+	assert.NoError(t, err)
+}
+
+func TestListComments(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		panic(err)
+	}
+	defer db.Close()
+
+	mockRows := sqlmock.NewRows([]string{"id", "text", "user_id", "created_at", "post_id"}).
+		AddRow(validUUID, "Comment 1", validUserID, time.Now(), validUUID).
+		AddRow(validUUID, "Comment 2", validUserID, time.Now(), validUUID)
+	mock.ExpectQuery(".*").WillReturnRows(mockRows)
+
+	req := &posts.ListCommentsRequest{
+		PostId:     validUUID,
+		UserId:     validUserID,
+		PageNumber: 0,
+		PageSize:   10,
+	}
+
+	result, err := usecase.ListComments(req, db)
+
+	assert.NoError(t, err)
+	assert.Equal(t, 2, len(result))
 }

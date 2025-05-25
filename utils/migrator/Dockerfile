@@ -17,7 +17,7 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -o migrator ./utils/migrator/cmd/app/main.go
 
 # Final stage: use a minimal Docker image
-FROM alpine:latest
+FROM alpine:3.21
 
 # Set the working directory and copy the built binary from the builder stage.
 WORKDIR /root/
