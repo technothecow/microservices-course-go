@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 	"log"
-	gen "sn/gateway/generated"
-	"sn/libraries/proto/posts"
 	"strconv"
 	"strings"
 	"time"
@@ -15,10 +13,13 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
+
+	gen "sn/gateway/generated"
+	"sn/libraries/proto/posts"
 )
 
 var ErrPostNotFound = errors.New("post not found")
-var ErrPostNotAuthorized = errors.New("not authorized")
+var ErrNotAuthorized = errors.New("not authorized")
 
 // Requires defer cl() to be called after
 var GetPostsClient = func() (posts.PostServiceClient, context.Context, func(), error) {
@@ -158,7 +159,7 @@ func EditPost(userId string, body *gen.EditPostRequest) (*gen.Post, error) {
 		if status.Code(err) == codes.NotFound {
 			return nil, ErrPostNotFound
 		} else if status.Code(err) == codes.PermissionDenied {
-			return nil, ErrPostNotAuthorized
+			return nil, ErrNotAuthorized
 		}
 		return nil, err
 	}
@@ -183,7 +184,7 @@ func DeletePost(userId string, postId string) error {
 		if status.Code(err) == codes.NotFound {
 			return ErrPostNotFound
 		} else if status.Code(err) == codes.PermissionDenied {
-			return ErrPostNotAuthorized
+			return ErrNotAuthorized
 		}
 		return err
 	}
@@ -208,7 +209,7 @@ func CreateComment(userId string, body *gen.CreateCommentRequest) error {
 		if status.Code(err) == codes.NotFound {
 			return ErrPostNotFound
 		} else if status.Code(err) == codes.PermissionDenied {
-			return ErrPostNotAuthorized
+			return ErrNotAuthorized
 		}
 		return err
 	}
@@ -235,7 +236,7 @@ func GetCommentsList(userId string, body *gen.PaginatedCommentsRequest) (*gen.Co
 		if status.Code(err) == codes.NotFound {
 			return nil, ErrPostNotFound
 		} else if status.Code(err) == codes.PermissionDenied {
-			return nil, ErrPostNotAuthorized
+			return nil, ErrNotAuthorized
 		}
 		return nil, err
 	}

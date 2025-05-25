@@ -17,6 +17,20 @@ import (
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
+// Defines values for TopPostsRequestParam.
+const (
+	TopPostsRequestParamComments TopPostsRequestParam = "comments"
+	TopPostsRequestParamLikes    TopPostsRequestParam = "likes"
+	TopPostsRequestParamViews    TopPostsRequestParam = "views"
+)
+
+// Defines values for TopUsersRequestParam.
+const (
+	TopUsersRequestParamComments TopUsersRequestParam = "comments"
+	TopUsersRequestParamLikes    TopUsersRequestParam = "likes"
+	TopUsersRequestParamViews    TopUsersRequestParam = "views"
+)
+
 // Comment defines model for Comment.
 type Comment struct {
 	CreatedAt string             `json:"createdAt"`
@@ -43,6 +57,12 @@ type CreatePostRequest struct {
 	IsPrivate   string   `json:"isPrivate"`
 	Tags        []string `json:"tags"`
 	Title       string   `json:"title"`
+}
+
+// Dynamic defines model for Dynamic.
+type Dynamic struct {
+	Date  string `json:"date"`
+	Value int    `json:"value"`
 }
 
 // EditPostRequest defines model for EditPostRequest.
@@ -98,9 +118,33 @@ type Post struct {
 	UpdatedAt   string             `json:"updatedAt"`
 }
 
+// PostDynamics defines model for PostDynamics.
+type PostDynamics struct {
+	Comments []Dynamic `json:"comments"`
+	Likes    []Dynamic `json:"likes"`
+	Views    []Dynamic `json:"views"`
+}
+
+// PostDynamicsRequest defines model for PostDynamicsRequest.
+type PostDynamicsRequest struct {
+	PostId openapi_types.UUID `json:"postId"`
+}
+
 // PostId defines model for PostId.
 type PostId struct {
 	Id openapi_types.UUID `json:"id"`
+}
+
+// PostStats defines model for PostStats.
+type PostStats struct {
+	Comments int64 `json:"comments"`
+	Likes    int64 `json:"likes"`
+	Views    int64 `json:"views"`
+}
+
+// PostStatsRequest defines model for PostStatsRequest.
+type PostStatsRequest struct {
+	PostId openapi_types.UUID `json:"postId"`
 }
 
 // PostsList defines model for PostsList.
@@ -119,6 +163,48 @@ type ProfileResponse struct {
 	Username    string             `json:"username"`
 }
 
+// TopPosts defines model for TopPosts.
+type TopPosts struct {
+	Posts []TopPostsItem `json:"posts"`
+}
+
+// TopPostsItem defines model for TopPostsItem.
+type TopPostsItem struct {
+	Comments int                `json:"comments"`
+	Likes    int                `json:"likes"`
+	PostId   openapi_types.UUID `json:"post_id"`
+	Views    int                `json:"views"`
+}
+
+// TopPostsRequest defines model for TopPostsRequest.
+type TopPostsRequest struct {
+	Param TopPostsRequestParam `json:"param"`
+}
+
+// TopPostsRequestParam defines model for TopPostsRequest.Param.
+type TopPostsRequestParam string
+
+// TopUsers defines model for TopUsers.
+type TopUsers struct {
+	Users []TopUsersItem `json:"users"`
+}
+
+// TopUsersItem defines model for TopUsersItem.
+type TopUsersItem struct {
+	Comments int                `json:"comments"`
+	Likes    int                `json:"likes"`
+	UserId   openapi_types.UUID `json:"user_id"`
+	Views    int                `json:"views"`
+}
+
+// TopUsersRequest defines model for TopUsersRequest.
+type TopUsersRequest struct {
+	Param TopUsersRequestParam `json:"param"`
+}
+
+// TopUsersRequestParam defines model for TopUsersRequest.Param.
+type TopUsersRequestParam string
+
 // UserRegistration defines model for UserRegistration.
 type UserRegistration struct {
 	Email    openapi_types.Email `json:"email"`
@@ -131,6 +217,15 @@ type UsernameAndPassword struct {
 	Password string `json:"password"`
 	Username string `json:"username"`
 }
+
+// GetPostDynamicsJSONRequestBody defines body for GetPostDynamics for application/json ContentType.
+type GetPostDynamicsJSONRequestBody = PostDynamicsRequest
+
+// GetPostStatsJSONRequestBody defines body for GetPostStats for application/json ContentType.
+type GetPostStatsJSONRequestBody = PostStatsRequest
+
+// GetTopPostsJSONRequestBody defines body for GetTopPosts for application/json ContentType.
+type GetTopPostsJSONRequestBody = TopPostsRequest
 
 // DeletePostJSONRequestBody defines body for DeletePost for application/json ContentType.
 type DeletePostJSONRequestBody = PostId
@@ -165,11 +260,23 @@ type EditMyProfileJSONRequestBody = EditProfile
 // AuthUserJSONRequestBody defines body for AuthUser for application/json ContentType.
 type AuthUserJSONRequestBody = UsernameAndPassword
 
+// GetTopUsersJSONRequestBody defines body for GetTopUsers for application/json ContentType.
+type GetTopUsersJSONRequestBody = TopUsersRequest
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 	// Ping endpoint
 	// (GET /ping)
 	Ping(c *gin.Context)
+	// Get post dynamics
+	// (POST /v1/post/dynamics)
+	GetPostDynamics(c *gin.Context)
+	// Get post stats
+	// (POST /v1/post/stats)
+	GetPostStats(c *gin.Context)
+	// Get top posts
+	// (POST /v1/post/top)
+	GetTopPosts(c *gin.Context)
 	// Delete a post
 	// (DELETE /v1/posts)
 	DeletePost(c *gin.Context)
@@ -206,6 +313,9 @@ type ServerInterface interface {
 	// Authenticates user
 	// (POST /v1/users/me)
 	AuthUser(c *gin.Context)
+	// Get top users
+	// (POST /v1/users/top)
+	GetTopUsers(c *gin.Context)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -228,6 +338,45 @@ func (siw *ServerInterfaceWrapper) Ping(c *gin.Context) {
 	}
 
 	siw.Handler.Ping(c)
+}
+
+// GetPostDynamics operation middleware
+func (siw *ServerInterfaceWrapper) GetPostDynamics(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetPostDynamics(c)
+}
+
+// GetPostStats operation middleware
+func (siw *ServerInterfaceWrapper) GetPostStats(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetPostStats(c)
+}
+
+// GetTopPosts operation middleware
+func (siw *ServerInterfaceWrapper) GetTopPosts(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetTopPosts(c)
 }
 
 // DeletePost operation middleware
@@ -386,6 +535,19 @@ func (siw *ServerInterfaceWrapper) AuthUser(c *gin.Context) {
 	siw.Handler.AuthUser(c)
 }
 
+// GetTopUsers operation middleware
+func (siw *ServerInterfaceWrapper) GetTopUsers(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetTopUsers(c)
+}
+
 // GinServerOptions provides options for the Gin server.
 type GinServerOptions struct {
 	BaseURL      string
@@ -414,6 +576,9 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	}
 
 	router.GET(options.BaseURL+"/ping", wrapper.Ping)
+	router.POST(options.BaseURL+"/v1/post/dynamics", wrapper.GetPostDynamics)
+	router.POST(options.BaseURL+"/v1/post/stats", wrapper.GetPostStats)
+	router.POST(options.BaseURL+"/v1/post/top", wrapper.GetTopPosts)
 	router.DELETE(options.BaseURL+"/v1/posts", wrapper.DeletePost)
 	router.GET(options.BaseURL+"/v1/posts", wrapper.GetPost)
 	router.PATCH(options.BaseURL+"/v1/posts", wrapper.EditPost)
@@ -426,36 +591,42 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.GET(options.BaseURL+"/v1/users/me", wrapper.GetMyProfile)
 	router.PATCH(options.BaseURL+"/v1/users/me", wrapper.EditMyProfile)
 	router.POST(options.BaseURL+"/v1/users/me", wrapper.AuthUser)
+	router.POST(options.BaseURL+"/v1/users/top", wrapper.GetTopUsers)
 }
 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
-	"/zhlN0igIgAA",
+	"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",
+	"BbXiKcoKEx7+CQAA///cxCn6WTAAAA==",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

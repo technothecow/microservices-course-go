@@ -2,8 +2,9 @@ package gateway
 
 import (
 	"net/http"
-	"sn/gateway/internal/usecase"
 	gen "sn/gateway/generated"
+	"sn/gateway/internal/usecase"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -25,7 +26,7 @@ func (*Server) DeletePost(ctx *gin.Context) {
 	if err != nil {
 		if err == usecase.ErrPostNotFound {
 			ctx.Status(http.StatusNotFound)
-		} else if err == usecase.ErrPostNotAuthorized {
+		} else if err == usecase.ErrNotAuthorized {
 			ctx.Status(http.StatusForbidden)
 		} else {
 			ctx.JSON(http.StatusInternalServerError, gen.Error{

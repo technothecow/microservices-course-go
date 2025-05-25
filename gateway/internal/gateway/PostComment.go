@@ -28,7 +28,7 @@ func (*Server) PostComment(ctx *gin.Context) {
 	if err != nil {
 		if errors.Is(err, usecase.ErrPostNotFound) {
 			ctx.Status(http.StatusNotFound)
-		} else if errors.Is(err, usecase.ErrPostNotAuthorized) {
+		} else if errors.Is(err, usecase.ErrNotAuthorized) {
 			ctx.Status(http.StatusForbidden)
 		} else {
 			ctx.JSON(http.StatusInternalServerError, gen.Error{

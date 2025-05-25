@@ -10,13 +10,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func (*Server) GetCommentsList(ctx *gin.Context) {
-	userId, err := GetUserIdFromContext(ctx)
+func (*Server) GetPostStats(ctx *gin.Context) {
+	_, err := GetUserIdFromContext(ctx)
 	if err != nil {
 		return
 	}
 
-	body := gen.PaginatedCommentsRequest{}
+	body := gen.PostStatsRequest{}
 	if err = ctx.ShouldBindJSON(&body); err != nil {
 		ctx.JSON(http.StatusBadRequest, gen.Error{
 			Message: "Invalid request body",
@@ -25,17 +25,15 @@ func (*Server) GetCommentsList(ctx *gin.Context) {
 		return
 	}
 
-	comments, err := usecase.GetCommentsList(userId, &body)
+	comments, err := usecase.GetPostStats(&body)
 	if err != nil {
 		if errors.Is(err, usecase.ErrPostNotFound) {
 			ctx.Status(http.StatusNotFound)
-		} else if errors.Is(err, usecase.ErrNotAuthorized) {
-			ctx.Status(http.StatusForbidden)
 		} else {
-			log.Printf("Failed to get comments list: %v", err)
+			log.Printf("Failed to get post stats: %v", err)
 			ctx.JSON(http.StatusInternalServerError, gen.Error{
-				Message: "Failed to get comments list",
-				Code:    "failed_to_get_comments_list",
+				Message: "Failed to get post stats",
+				Code:    "failed_to_get_post_stats",
 			})
 		}
 		return

@@ -1,6 +1,7 @@
 package kafka
 
 import (
+	"context"
 	"log"
 	"sync"
 	"time"
@@ -26,6 +27,19 @@ type messageRetry struct {
 	message     *sarama.ProducerMessage
 	shouldRetry bool
 	attempts    int
+}
+
+func SetupConsumer(topic string, handler sarama.ConsumerGroupHandler) (sarama.ConsumerGroup, error) {
+	config := sarama.NewConfig()
+	config.Consumer.Return.Errors = true
+	config.Consumer.Offsets.Initial = sarama.OffsetOldest
+
+	consumer, err := sarama.NewConsumerGroup([]string{"kafka:29092"}, topic, config)
+	if err != nil {
+		return nil, err
+	}
+	consumer.Consume(context.Background(), []string{topic}, handler)
+	return consumer, nil
 }
 
 // GetProducer returns a singleton Kafka producer and initializes the retry processor

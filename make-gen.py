@@ -56,7 +56,7 @@ def main():
             service_name = proto_file.stem
             
             # Create output directory path
-            output_dir = current_dir # / 'library' / 'proto' / service_name
+            output_dir = current_dir # / 'libraries' / 'proto' / service_name
             
             print(f"Processing {proto_file}")
             generate_proto(proto_file, output_dir)

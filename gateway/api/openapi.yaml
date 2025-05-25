@@ -268,6 +268,92 @@ paths:
                 '404':
                     description: Post not found
 
+    /v1/post/stats:
+        post:
+            summary: Get post stats
+            operationId: GetPostStats
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/PostStatsRequest'
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/PostStats'
+                '401':
+                    description: Not authenticated
+                '404':
+                    description: Post not found
+
+    /v1/post/dynamics:
+        post:
+            summary: Get post dynamics
+            operationId: GetPostDynamics
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/PostDynamicsRequest'
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/PostDynamics'
+                '401':
+                    description: Not authenticated
+                '404':
+                    description: Post not found
+    
+    /v1/post/top:
+        post:
+            summary: Get top posts
+            operationId: GetTopPosts
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/TopPostsRequest'
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/TopPosts'
+                '401':
+                    description: Not authenticated
+
+    /v1/users/top:
+        post:
+            summary: Get top users
+            operationId: GetTopUsers
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/TopUsersRequest'
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/TopUsers'
+                '401':
+                    description: Not authenticated
+                '404':
+                    description: Post not found
+
 components:
     schemas:
         PingResponse:
@@ -528,3 +614,149 @@ components:
                     type: array
                     items:
                         $ref: '#/components/schemas/Comment'
+        
+        PostStatsRequest:
+            type: object
+            required:
+                - postId
+            properties:
+                postId:
+                    type: string
+                    format: uuid
+            
+        PostStats:
+            type: object
+            required:
+                - views
+                - likes
+                - comments
+            properties:
+                views:
+                    type: integer
+                    format: int64
+                likes:
+                    type: integer
+                    format: int64
+                comments:
+                    type: integer
+                    format: int64
+
+        PostDynamicsRequest:
+            type: object
+            required:
+                - postId
+            properties:
+                postId:
+                    type: string
+                    format: uuid
+
+        Dynamic:
+            type: object
+            required:
+                - date
+                - value
+            properties:
+                date:
+                    type: string
+                value:
+                    type: integer
+
+        PostDynamics:
+            type: object
+            required:
+                - views
+                - likes
+                - comments
+            properties:
+                views:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/Dynamic'
+                likes:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/Dynamic'
+                comments:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/Dynamic'
+        
+        TopPostsRequest:
+            type: object
+            required:
+                - param
+            properties:
+                param:
+                    type: string
+                    enum:
+                        - views
+                        - likes
+                        - comments
+
+        TopPostsItem:
+            type: object
+            required:
+                - post_id
+                - views
+                - likes
+                - comments
+            properties:
+                post_id:
+                    type: string
+                    format: uuid
+                views:
+                    type: integer
+                likes:
+                    type: integer
+                comments:
+                    type: integer
+            
+        TopPosts:
+            type: object
+            required:
+                - posts
+            properties:
+                posts:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/TopPostsItem'
+
+        TopUsersRequest:
+            type: object
+            required:
+                - param
+            properties:
+                param:
+                    type: string
+                    enum:
+                        - views
+                        - likes
+                        - comments
+        
+        TopUsersItem:
+            type: object
+            required:
+                - user_id
+                - views
+                - likes
+                - comments
+            properties:
+                user_id:
+                    type: string
+                    format: uuid
+                views:
+                    type: integer
+                likes:
+                    type: integer
+                comments:
+                    type: integer
+        
+        TopUsers:
+            type: object
+            required:
+                - users
+            properties:
+                users:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/TopUsersItem'
