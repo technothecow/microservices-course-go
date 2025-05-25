@@ -488,6 +488,7 @@ components:
 
         EditPostRequest:
             type: object
+            additionalProperties: false
             required:
                 - id
                 - title
@@ -511,6 +512,7 @@ components:
 
         PaginatedPostsRequest:
             type: object
+            additionalProperties: false
             required:
                 - page
                 - pagesize
@@ -536,12 +538,12 @@ components:
 
         CreatePostRequest:
             type: object
+            additionalProperties: false
             required:
                 - title
                 - description
                 - isPrivate
                 - tags
-            additionalProperties: false
             properties:
                 title:
                     type: string
@@ -556,6 +558,7 @@ components:
 
         CreateCommentRequest:
             type: object
+            additionalProperties: false
             required:
                 - postId
                 - text
@@ -568,6 +571,7 @@ components:
         
         PaginatedCommentsRequest:
             type: object
+            additionalProperties: false
             required:
                 - postId
                 - page
@@ -617,6 +621,7 @@ components:
         
         PostStatsRequest:
             type: object
+            additionalProperties: false
             required:
                 - postId
             properties:
@@ -643,6 +648,7 @@ components:
 
         PostDynamicsRequest:
             type: object
+            additionalProperties: false
             required:
                 - postId
             properties:
@@ -683,6 +689,7 @@ components:
         
         TopPostsRequest:
             type: object
+            additionalProperties: false
             required:
                 - param
             properties:
@@ -695,6 +702,7 @@ components:
 
         TopPostsItem:
             type: object
+            additionalProperties: false
             required:
                 - post_id
                 - views
@@ -713,6 +721,7 @@ components:
             
         TopPosts:
             type: object
+            additionalProperties: false
             required:
                 - posts
             properties:
@@ -723,6 +732,7 @@ components:
 
         TopUsersRequest:
             type: object
+            additionalProperties: false
             required:
                 - param
             properties:
